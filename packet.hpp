@@ -30,6 +30,7 @@ public:
 	T get() const { return MyPacket.val;};
 
 	void rowGet(std::array<uint8_t , sizeof(T)> &buf) const { buf = MyPacket.buf; };
+	void rowSet(std::array<uint8_t , sizeof(T)> &buf) { MyPacket.buf = buf; };
 
 	void encode(std::vector<uint8_t> &buffer){
 		buffer.push_back(BEGIN());
@@ -55,26 +56,29 @@ public:
 		buffer.push_back(END());
 	};
 
-	void decode(std::vector<uint8_t> &buffer) {
-		if(buffer.front() == BEGIN()) buffer.erase(buffer.begin()); //もし、Start Bitがいたら無視
-
-		for(size_t i = 0;i < buffer.size();i++){
-			if(buffer.at(i) == END()){
+	void decode(std::vector<uint8_t> &buffer){
+		std::vector<uint8_t> buffer_temp = {};
+		if(buffer.front() == 0xC1) buffer.erase(buffer.begin()); //もし、Start Bitがいたら無視
+		size_t i = 0;
+		while(i < buffer.size()){
+			if(buffer.at(i) == 0xC0){
 
 			}
-			else if(buffer.at(i) == ESC()){
-				uint8_t next = buffer.at(i + 1);
+			else if(buffer.at(i) == 0xDB){
+				i++;
+				uint8_t next = buffer.at(i);
 
-				if(next == ESC_END()) MyPacket.buf.at(i) = END();
-				else if(next == ESC_ESC()) MyPacket.buf.at(i) = ESC();
-				else if(next == ESC_BEGIN()) MyPacket.buf.at(i) = BEGIN();
-
-				++i;
+				if(next == 0xDC)  buffer_temp.push_back(0xC0);
+				else if(next == 0xDD)  buffer_temp.push_back(0xDB);
+				else if(next == 0xDE)  buffer_temp.push_back(0xC1);
 			}
 			else {
-				MyPacket.buf.at(i) = buffer.at(i);
+				buffer_temp.push_back(buffer.at(i));
 			}
+			i++;
 		}
+
+		std::copy(buffer_temp.begin(),buffer_temp.end(),MyPacket.buf.begin());
 	};
 
 	static constexpr uint8_t END() { return 0xC0;};
