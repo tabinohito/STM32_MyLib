@@ -16,6 +16,7 @@ extern "C"{
 }
 #include <array>
 #include <map>
+#include <string.h>
 
 #define	_CR_CRLF		1	/* 1: Convert \n ==> \r\n in the output char */
 #define	_USE_LONGLONG	0	/* 1: Enable long long integer in type "ll". */
@@ -39,8 +40,12 @@ class Serial{
 			HAL_UART_Receive_DMA(&huart,serialData,DATANUM);
 		};
 
+		UART_HandleTypeDef getHandle(){
+			return huart;
+		};
+
 		uint8_t available(){
-			uint8_t index = DATANUM - huart.hdmarx->Instance->NDTR;;
+			uint8_t index = DATANUM - huart.hdmarx->Instance->CNDTR;
 			uint8_t remainData = index - indexRead;
 			return remainData;
 		};
@@ -54,7 +59,6 @@ class Serial{
 
 		void write(const uint8_t buf){ HAL_UART_Transmit(&huart, (uint8_t *)&buf, sizeof(buf), 0xFF); };
 		void write(uint8_t* buf,size_t size) { for(size_t i = 0;i < size;i++) write(buf[i]); };
-		void write(std::vector<uint8_t> buf){ for(auto &i:buf) write(i); };
 
 		void printf (const char* fmt, ...)
 		{
@@ -65,7 +69,12 @@ class Serial{
 		};
 
 		void print(const char fmt){ write(fmt); };
-		void print(const int16_t fmt) { printf("%d",fmt); };
+		void print(const uint8_t fmt) { print(std::to_string(fmt)); };
+		void print(const uint16_t fmt) { print(std::to_string(fmt)); };
+		void print(const uint32_t fmt) { print(std::to_string(fmt)); };
+		void print(const int8_t fmt) { print(std::to_string(fmt)); };
+		void print(const int16_t fmt) { print(std::to_string(fmt)); };
+		void print(const int32_t fmt) { print(std::to_string(fmt)); };
 		void print(const std::string fmt) { printf(fmt.c_str()); };
 		void print(const char* fmt){ printf(fmt); };
 		void print(const float fmt,size_t precision = 2){ print(static_cast<double>(fmt),precision); };
@@ -75,11 +84,17 @@ class Serial{
 			printf("%s",temp);
 		};
 
+		void println(){ printf("\n"); };
 		void println(const char fmt){
 			write(fmt);
 			printf("\n");
 		};
-		void println(const int16_t fmt) { printf("%d\n",fmt); };
+		void println(const uint8_t fmt) { print(std::to_string(fmt)); println();};
+		void println(const uint16_t fmt) { print(std::to_string(fmt)); println();};
+		void println(const uint32_t fmt) { print(std::to_string(fmt)); println();};
+		void println(const int8_t fmt) { print(std::to_string(fmt)); println();};
+		void println(const int16_t fmt) { print(std::to_string(fmt)); println();};
+		void println(const int32_t fmt) { print(std::to_string(fmt)); println();};
 		void println(const std::string fmt) {
 			printf(fmt.c_str());
 			printf("\n");
